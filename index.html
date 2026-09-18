@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<title>B-FM Balborinho Festival Manager</title>
+<title>B-Festival - Balborinho Festival Manager</title>
 <style>
 :root{--bg:#f4f5f7;--panel:#fff;--line:#d9dde3;--text:#20242a;--muted:#69717d;--accent:#2457d6;--danger:#b42318}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:0.8em system-ui,-apple-system,Segoe UI,sans-serif}
 header{padding:18px 24px;background:#1f2937;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px}
 h1{font-size:20px;margin:0}.toolbar{padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 button,.filelabel{border:1px solid #c8ced8;background:#fff;padding:8px 11px;border-radius:6px;cursor:pointer;font:inherit}
@@ -28,13 +28,18 @@ a{color:var(--accent)}.yes{font-weight:600}.no{color:var(--muted)}
 #columnList{display:flex;flex-direction:column;gap:6px;margin-top:10px}.colrow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px;border-radius:6px}
 .small{color:var(--muted);font-size:12px}
 .brand{display:flex;align-items:center;gap:12px}.brand img{width:42px;height:42px;object-fit:contain}.brand h1{display:flex;align-items:baseline;gap:8px}.brand h1 span{font-weight:500}
-th{white-space:normal;min-width:75px;max-width:125px}th .th{line-height:1.15;white-space:normal}
+th{white-space:normal;min-width:75px;max-width:100px}th .th{line-height:1.15;white-space:normal}
 .toolbar button,.toolbar .filelabel{display:inline-flex;align-items:center;gap:7px}.check{display:flex;align-items:center;gap:7px}
+th {white-space: pre-line;}
+header a {
+  color: inherit;
+  text-decoration: none;
+}
 @media(max-width:700px){.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}}
 </style>
 </head>
 <body>
-<header><div class="brand"><img src="logo-bbr.svg" alt="Balborinho" onerror="this.style.display='none'"><h1>B-FM <span>Balborinho Festival Manager</span></h1></div><span class="small" style="color:#dbe3ef">JSON · localStorage · custom fields</span></header>
+<header><div class="brand"><img src="logo-bbr.svg" alt="Balborinho" onerror="this.style.display='none'"><h1>B-Festival <span class="small" style="color:#dbe3ef">Balborinho Festival Manager</span></h1></div><span class="small" style="color:#dbe3ef"><a href="https://balborinho.com" target="_blank" rel="noopener">Balborinho</a> | 2026</span></header>
 <div class="toolbar">
 <button class="primary" onclick="newFestival()"><i class="fa-solid fa-plus"></i> New festival</button>
 <button onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Export JSON</button>
@@ -75,19 +80,19 @@ const seed=[
 ];
 
 let defaultCols=[
-{id:"name",label:"Festival<br>name",type:"text",visible:true},
-{id:"website",label:"Website",type:"url",visible:true},
-{id:"filmfreeway",label:"FilmFreeway",type:"url",visible:true},
+{id:"name",label:"Festival",type:"text",visible:true},
+{id:"website",label:"WWW",type:"url",visible:true},
+{id:"filmfreeway",label:"Film \n Freeway",type:"url",visible:true},
 {id:"city",label:"City",type:"text",visible:true},
 {id:"country",label:"Country",type:"text",visible:true},
-{id:"animationOnly",label:"Animation<br>only",type:"boolean",visible:true},
-{id:"animationCategory",label:"Animation<br>category",type:"boolean",visible:true},
-{id:"microNano",label:"Micro / nano<br>short",type:"boolean",visible:true},
-{id:"submittedBefore",label:"Submitted<br>before",type:"boolean",visible:true},
-{id:"nextDate",label:"Next<br>festival date",type:"date",visible:true},
-{id:"lastDate",label:"Last<br>festival date",type:"date",visible:true},
-{id:"submissionDate",label:"Submission<br>deadline",type:"date",visible:true},
-{id:"fee",label:"Submission<br>fee",type:"text",visible:true},
+{id:"animationOnly",label:"Anim \n only",type:"boolean",visible:true},
+{id:"animationCategory",label:"Anim \n category",type:"boolean",visible:true},
+{id:"microNano",label:"Micro ",type:"boolean",visible:true},
+{id:"submittedBefore",label:"Submitted \n before",type:"boolean",visible:true},
+{id:"nextDate",label:"Next \n festival",type:"date",visible:true},
+{id:"lastDate",label:"Last \n festival",type:"date",visible:true},
+{id:"submissionDate",label:"Submission \n deadline",type:"date",visible:true},
+{id:"fee",label:"Submission \n fee",type:"text",visible:true},
 {id:"notes",label:"Notes",type:"text",visible:true}
 ];
 let data=JSON.parse(localStorage.getItem(STORAGE)||'null')||{festivals:seed,columns:defaultCols};
