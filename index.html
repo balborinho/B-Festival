@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<title>B-FM Balborinho Festival Manager</title>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--line:#d9dde3;--text:#20242a;--muted:#69717d;--accent:#2457d6;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:18px 24px;background:#1f2937;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px}
+h1{font-size:20px;margin:0}.toolbar{padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button,.filelabel{border:1px solid #c8ced8;background:#fff;padding:8px 11px;border-radius:6px;cursor:pointer;font:inherit}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}button.danger{color:var(--danger)}
+input,select,textarea{border:1px solid #c8ced8;border-radius:5px;padding:7px;font:inherit;background:#fff}
+.search{min-width:240px}.wrap{padding:16px;overflow:auto}
+table{border-collapse:collapse;width:max-content;min-width:100%;background:#fff}
+th,td{border:1px solid var(--line);padding:7px 9px;vertical-align:top;white-space:nowrap}
+th{background:#eef1f5;position:sticky;top:0;z-index:2;text-align:left}
+th .th{display:flex;align-items:center;gap:5px}th button{padding:2px 5px;border:0;background:transparent}
+td.notes{white-space:pre-wrap;min-width:220px;max-width:400px}
+a{color:var(--accent)}.yes{font-weight:600}.no{color:var(--muted)}
+.modal{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.open{display:flex}.dialog{background:#fff;border-radius:10px;width:min(850px,100%);max-height:90vh;overflow:auto;padding:20px}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}
+.dialog h2{margin-top:0}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+#columnList{display:flex;flex-direction:column;gap:6px;margin-top:10px}.colrow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px;border-radius:6px}
+.small{color:var(--muted);font-size:12px}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:42px;height:42px;object-fit:contain}.brand h1{display:flex;align-items:baseline;gap:8px}.brand h1 span{font-weight:500}
+th{white-space:normal;min-width:75px;max-width:125px}th .th{line-height:1.15;white-space:normal}
+.toolbar button,.toolbar .filelabel{display:inline-flex;align-items:center;gap:7px}.check{display:flex;align-items:center;gap:7px}
+@media(max-width:700px){.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header><div class="brand"><img src="logo-bbr.svg" alt="Balborinho" onerror="this.style.display='none'"><h1>B-FM <span>Balborinho Festival Manager</span></h1></div><span class="small" style="color:#dbe3ef">JSON · localStorage · custom fields</span></header>
+<div class="toolbar">
+<button class="primary" onclick="newFestival()"><i class="fa-solid fa-plus"></i> New festival</button>
+<button onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+<label class="filelabel"><i class="fa-solid fa-file-import"></i> Import JSON <input id="importFile" type="file" accept=".json,application/json" hidden></label>
+<button onclick="manageColumns()"><i class="fa-solid fa-table-columns"></i> Manage columns</button>
+<input id="search" class="search" placeholder="Filter festivals..." oninput="render()">
+<button onclick="clearSearch()"><i class="fa-solid fa-xmark"></i> Clear</button>
+</div>
+<div class="wrap"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+
+<div id="festivalModal" class="modal"><div class="dialog">
+<h2 id="festivalTitle">Novo festival</h2><div id="festivalForm" class="formgrid"></div>
+<div class="actions"><button onclick="closeModal('festivalModal')">Cancel</button><button class="primary" onclick="saveFestival()"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>
+</div></div>
+
+<div id="columnsModal" class="modal"><div class="dialog">
+<h2>Manage columns</h2>
+<p class="small">Create fields, rename them, hide fields and reorder the table columns.</p>
+<div id="columnList"></div>
+<div style="display:flex;gap:8px;margin-top:12px"><input id="newColName" placeholder="New field name"><select id="newColType"><option value="text">Text</option><option value="url">URL</option><option value="date">Date</option><option value="number">Number</option><option value="boolean">Yes/No</option></select><button onclick="addColumn()"><i class="fa-solid fa-plus"></i> Add</button></div>
+<div class="actions"><button onclick="closeModal('columnsModal')">Close</button><button class="primary" onclick="saveColumns()"><i class="fa-solid fa-floppy-disk"></i> Save changes</button></div>
+</div></div>
+
+<script>
+const STORAGE='festival-manager-v1';
+const seed=[
+{name:"MONSTRA | Lisbon Animation Festival",website:"https://monstrafestival.com/",filmfreeway:"https://filmfreeway.com/MONSTRALisbonAnimationFestival",city:"Lisboa",country:"Portugal",animationOnly:true,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-03-11",lastDate:"2026-03-05",submissionDate:"2026-10-11",fee:"€2,50 (super-short)",notes:"Festival dedicado à animação. Tem categoria Super Short; consultar regulamento para duração exata."},
+{name:"CINANIMA",website:"https://cinanima.pt/",filmfreeway:"https://filmfreeway.com/CINANIMA_76",city:"Espinho",country:"Portugal",animationOnly:true,animationCategory:true,microNano:false,submittedBefore:false,nextDate:"2027-11-05",lastDate:"2026-11-06",submissionDate:"2026-06-21",fee:"Consultar edição",notes:"Festival internacional de cinema de animação. A edição 2026 decorre em novembro."},
+{name:"Cardiff Animation Festival",website:"https://www.cardiffanimation.com/",filmfreeway:"https://filmfreeway.com/CardiffAnimationFestival",city:"Cardiff",country:"Reino Unido",animationOnly:true,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-10-01",lastDate:"2026-10-01",submissionDate:"2026-09-22",fee:"Consultar",notes:"Aceita International Short Animated Film e Micro Short Animated Film."},
+{name:"AnimaPIX",website:"https://www.miratecarts.com/animapix",filmfreeway:"https://filmfreeway.com/AnimaPIX",city:"Ilha do Pico",country:"Portugal",animationOnly:true,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2026-12-01",lastDate:"2025-12-01",submissionDate:"2026-09-20",fee:"$5 (extended, 1-minute)",notes:"Categoria 1 MINUTE Animation; há também categorias de animação com maior duração."},
+{name:"Filminute – International One-Minute Film Festival",website:"https://www.filminute.com/",filmfreeway:"https://filmfreeway.com/Filminute",city:"Londres",country:"Reino Unido",animationOnly:false,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-03-01",lastDate:"2026-03-01",submissionDate:"2026-12-31",fee:"Grátis (listagens de 2026)",notes:"Festival dedicado a filmes de um minuto; a animação é elegível."},
+{name:"Short Com International Comedy Film & Animation Festival",website:"https://filmfreeway.com/ShortCom",filmfreeway:"https://filmfreeway.com/ShortCom",city:"Online / internacional",country:"Internacional",animationOnly:false,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-09-24",lastDate:"2026-09-01",submissionDate:"2027-07-09",fee:"$18,50 early bird (micro/animation)",notes:"Tem categoria específica Micro-short and Animation Entry para filmes com menos de 5 minutos."},
+{name:"short/age – Shortfilms for a New Age",website:"https://filmfreeway.com/shortfilmsforanewage",filmfreeway:"https://filmfreeway.com/shortfilmsforanewage",city:"Portugal / online",country:"Portugal",animationOnly:false,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-08-15",lastDate:"2026-08-15",submissionDate:"2027-01-28",fee:"Grátis PT; $10 internacional (último prazo)",notes:"Aceita curtas internacionais de ficção, documentário e animação; verificar limites de duração da edição."},
+{name:"Cinema on the Washing Line",website:"https://filmfreeway.com/cinemanoestendal",filmfreeway:"https://filmfreeway.com/cinemanoestendal",city:"Portugal",country:"Portugal",animationOnly:false,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-09-01",lastDate:"2026-09-12",submissionDate:"2026-05-16",fee:"Grátis",notes:"Categoria internacional para curtas de ficção, documentário e animação com menos de 15 minutos."},
+{name:"ANIMAC – International Animation Film Festival",website:"https://www.animac.cat/",filmfreeway:"",city:"Lleida",country:"Espanha",animationOnly:true,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-02-25",lastDate:"2026-02-25",submissionDate:"2026-10-20",fee:"Consultar",notes:"Festival internacional de animação; confirmar categoria/limite micro na edição corrente."},
+{name:"Anima – Brussels Animation Film Festival",website:"https://www.animafestival.be/",filmfreeway:"",city:"Bruxelas",country:"Bélgica",animationOnly:true,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-02-19",lastDate:"2026-02-19",submissionDate:"2026-10-02",fee:"Grátis (listagem 2026)",notes:"Festival dedicado à animação; verificar regras de duração para super-short/micro."},
+{name:"Anifilm – International Festival of Animated Films",website:"https://www.anifilm.cz/",filmfreeway:"",city:"Liberec",country:"Chéquia",animationOnly:true,animationCategory:true,microNano:true,submittedBefore:false,nextDate:"2027-05-04",lastDate:"2026-05-05",submissionDate:"2026-12-31",fee:"Grátis (listagem)",notes:"Festival internacional de animação; confirmar categoria específica para micro/nano na chamada."}
+];
+
+let defaultCols=[
+{id:"name",label:"Festival<br>name",type:"text",visible:true},
+{id:"website",label:"Website",type:"url",visible:true},
+{id:"filmfreeway",label:"FilmFreeway",type:"url",visible:true},
+{id:"city",label:"City",type:"text",visible:true},
+{id:"country",label:"Country",type:"text",visible:true},
+{id:"animationOnly",label:"Animation<br>only",type:"boolean",visible:true},
+{id:"animationCategory",label:"Animation<br>category",type:"boolean",visible:true},
+{id:"microNano",label:"Micro / nano<br>short",type:"boolean",visible:true},
+{id:"submittedBefore",label:"Submitted<br>before",type:"boolean",visible:true},
+{id:"nextDate",label:"Next<br>festival date",type:"date",visible:true},
+{id:"lastDate",label:"Last<br>festival date",type:"date",visible:true},
+{id:"submissionDate",label:"Submission<br>deadline",type:"date",visible:true},
+{id:"fee",label:"Submission<br>fee",type:"text",visible:true},
+{id:"notes",label:"Notes",type:"text",visible:true}
+];
+let data=JSON.parse(localStorage.getItem(STORAGE)||'null')||{festivals:seed,columns:defaultCols};
+data.festivals.forEach(f=>{if(f.submittedBefore===undefined)f.submittedBefore=false});
+let editIndex=null,sort={id:null,dir:1};
+
+function persist(){localStorage.setItem(STORAGE,JSON.stringify(data))}
+if(!data.columns.some(c=>c.id==='submittedBefore')){
+  const at=data.columns.findIndex(c=>c.id==='nextDate');
+  data.columns.splice(at,0,{id:'submittedBefore',label:'Submitted<br>before',type:'boolean',visible:true});
+  data.festivals.forEach(f=>f.submittedBefore=!!f.submittedBefore);
+  persist();
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function visibleCols(){return data.columns.filter(c=>c.visible)}
+function render(){
+ let q=document.getElementById('search').value.toLowerCase();
+ let cols=visibleCols(), rows=data.festivals.filter(f=>JSON.stringify(f).toLowerCase().includes(q));
+ if(sort.id){rows.sort((a,b)=>String(a[sort.id]??'').localeCompare(String(b[sort.id]??''),undefined,{numeric:true})*sort.dir)}
+ document.getElementById('thead').innerHTML='<tr>'+cols.map(c=>`<th><div class="th">${esc(c.label)} <button onclick="sortBy('${c.id}')" title="Sort"><i class="fa-solid fa-sort"></i></button></div></th>`).join('')+'<th>Actions</th></tr>';
+ document.getElementById('tbody').innerHTML=rows.length?rows.map(f=>{let i=data.festivals.indexOf(f);return '<tr>'+cols.map(c=>`<td class="${c.id==='notes'?'notes':''}">${format(f[c.id],c)}</td>`).join('')+`<td><button onclick="editFestival(${i})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+<button class="danger" onclick="deleteFestival(${i})" title="Delete"><i class="fa-solid fa-trash"></i></button></td></tr>`}).join(''):`<tr><td class="empty" colspan="${cols.length+1}">Nenhum festival encontrado.</td></tr>`;
+}
+function format(v,c){if(v==null||v==='')return '';if(c.type==='boolean')return v?'<span class="yes">Sim</span>':'<span class="no">Não</span>';if(c.type==='url')return `<a href="${esc(v)}" target="_blank" rel="noopener">Abrir</a>`;if(c.type==='date'){let d=new Date(v+'T00:00:00');return isNaN(d)?esc(v):d.toLocaleDateString('pt-PT')}return esc(v)}
+function sortBy(id){if(sort.id===id)sort.dir*=-1;else{sort.id=id;sort.dir=1}render()}
+function clearSearch(){document.getElementById('search').value='';render()}
+function newFestival(){editIndex=null;document.getElementById('festivalTitle').textContent='Novo festival';buildForm({});openModal('festivalModal')}
+function editFestival(i){editIndex=i;document.getElementById('festivalTitle').textContent='Editar festival';buildForm(data.festivals[i]);openModal('festivalModal')}
+function buildForm(f){document.getElementById('festivalForm').innerHTML=data.columns.map(c=>`<label class="field ${c.id==='notes'?'full':''}"><span>${esc(c.label)}</span>${c.type==='boolean'?`<span class="check"><input id="f_${c.id}" type="checkbox" ${f[c.id]?'checked':''}> Sim</span>`:`<input id="f_${c.id}" type="${c.type==='url'?'url':c.type==='date'?'date':c.type==='number'?'number':'text'}" value="${esc(f[c.id]??'')}">`}</label>`).join('')}
+function saveFestival(){let f={};data.columns.forEach(c=>{let e=document.getElementById('f_'+c.id);f[c.id]=c.type==='boolean'?e.checked:e.value});if(editIndex===null)data.festivals.push(f);else data.festivals[editIndex]=f;persist();closeModal('festivalModal');render()}
+function deleteFestival(i){if(confirm('Delete this festival?')){data.festivals.splice(i,1);persist();render()}}
+function manageColumns(){renderColumns();openModal('columnsModal')}
+function renderColumns(){document.getElementById('columnList').innerHTML=data.columns.map((c,i)=>`<div class="colrow"><button onclick="moveCol(${i},-1)" title="Move up"><i class="fa-solid fa-chevron-up"></i></button><button onclick="moveCol(${i},1)" title="Move down"><i class="fa-solid fa-chevron-down"></i></button><input id="cn_${c.id}" value="${esc(c.label)}"><select id="ct_${c.id}"><option value="text" ${c.type==='text'?'selected':''}>Text</option><option value="url" ${c.type==='url'?'selected':''}>URL</option><option value="date" ${c.type==='date'?'selected':''}>Date</option><option value="number" ${c.type==='number'?'selected':''}>Number</option><option value="boolean" ${c.type==='boolean'?'selected':''}>Yes/No</option></select><label class="check"><input id="cv_${c.id}" type="checkbox" ${c.visible?'checked':''}> visible</label><button class="danger" onclick="removeCol(${i})" title="Delete"><i class="fa-solid fa-trash"></i></button></div>`).join('')}
+function moveCol(i,d){let j=i+d;if(j<0||j>=data.columns.length)return;[data.columns[i],data.columns[j]]=[data.columns[j],data.columns[i]];renderColumns()}
+function removeCol(i){if(data.columns.length<=1)return alert('At least one column must remain.');if(confirm('Delete this column and all data in this field?')){let id=data.columns[i].id;data.columns.splice(i,1);data.festivals.forEach(f=>delete f[id]);renderColumns()}}
+function addColumn(){let label=document.getElementById('newColName').value.trim();if(!label)return;let id='custom_'+Date.now();data.columns.push({id,label,type:document.getElementById('newColType').value,visible:true});data.festivals.forEach(f=>f[id]=document.getElementById('newColType').value==='boolean'?false:'');document.getElementById('newColName').value='';renderColumns()}
+function saveColumns(){data.columns.forEach(c=>{c.label=document.getElementById('cn_'+c.id).value;c.type=document.getElementById('ct_'+c.id).value;c.visible=document.getElementById('cv_'+c.id).checked});persist();closeModal('columnsModal');render()}
+function openModal(id){document.getElementById(id).classList.add('open')}function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
+function exportJSON(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='festivais.json';a.click();URL.revokeObjectURL(a.href)}
+document.getElementById('importFile').addEventListener('change',e=>{let file=e.target.files[0];if(!file)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.festivals||!x.columns)throw Error();data=x;persist();render();alert('JSON imported successfully.')}catch(err){alert('Invalid JSON: it must contain "festivals" and "columns".')}};r.readAsText(file);e.target.value=''});
+
+render();
+</script>
+</body></html>
