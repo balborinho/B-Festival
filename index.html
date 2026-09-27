@@ -1,10 +1,42 @@
+<head>
+
+
+
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Optional: Open Graph -->
+    <meta property="og:title" content="Page Title">
+    <meta property="og:description" content="Page description.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://example.com/">
+    <meta property="og:image" content="https://example.com/images/preview.jpg">
+</head>
+
+
+
 <!doctype html>
-<html lang="pt">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <title>B-Festival - Balborinho Festival Manager</title>
+
+<meta name="description" content="A simple, open-source tool for managing animation festivals, submission deadlines, categories, dates, and festival information.">
+<meta name="author" content="nafergo & Balborinho">
+<link rel="canonical" href="https://balborinho.com/B-Festival/">
+
+<meta property="og:title" content="B-Festival">
+<meta property="og:description" content="A simple, open-source tool for managing animation festivals, submission deadlines, categories, dates, and festival information.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://balborinho.com/B-Festival/">
+<meta property="og:image" content="">
+
+<!-- Favicon -->
+<link rel="icon" href="logo-bbr.svg" type="image/svg+xml">
+
 <style>
 :root{--bg:#f4f5f7;--panel:#fff;--line:#d9dde3;--text:#20242a;--muted:#69717d;--accent:#2457d6;--danger:#b42318}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:0.8em system-ui,-apple-system,Segoe UI,sans-serif}
@@ -39,7 +71,7 @@ header a {
 </style>
 </head>
 <body>
-<header><div class="brand"><img src="logo-bbr.svg" alt="Balborinho" onerror="this.style.display='none'"><h1>B-Festival <span class="small" style="color:#dbe3ef">Balborinho Festival Manager</span></h1></div><span class="small" style="color:#dbe3ef"><a href="https://balborinho.com" target="_blank" rel="noopener">Balborinho</a> | 2026</span></header>
+<header><div class="brand"><img src="logo-bbr.svg" alt="Balborinho" onerror="this.style.display='none'"><h1>B-Festival <span class="small" style="color:#dbe3ef">Balborinho Festival Manager</span></h1></div><span class="small" style="color:#dbe3ef"><a href="https://github.com/balborinho/B-Festival" target="_blank" rel="noopener">B-Festival repository</a> | <a href="https://balborinho.com" target="_blank" rel="noopener">Balborinho</a> | 2026</span></header>
 <div class="toolbar">
 <button class="primary" onclick="newFestival()"><i class="fa-solid fa-plus"></i> New festival</button>
 <button onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Export JSON</button>
